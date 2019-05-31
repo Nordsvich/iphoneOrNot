@@ -1,0 +1,4 @@
+
+python C:\Users\理蝾韁Desktop\predict.py --model C:\Users\理蝾韁Desktop\model_ip.pth --input C:\Users\理蝾韁Desktop\Final_set\test --output C:\Users\理蝾韁Desktop\result.csv
+
+
