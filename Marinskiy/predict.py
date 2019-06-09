@@ -29,19 +29,24 @@ def predict_proba(model_path, in_folder, out_file):
     input_details = interpreter.get_input_details()
     output_details = interpreter.get_output_details()
 
-    # Now lets walk through our validation set and get predictions for each photo
+    # initialize variables
     preds = []
     filenames = []
     count = 0
 
+    # Now lets walk through our validation set and get predictions for each photo
     for subdir, dirs, files in os.walk(in_folder):
         for file in files:
             input_data = load_image(os.path.join(subdir, file))
             interpreter.set_tensor(input_details[0]['index'], input_data)
             interpreter.invoke()
             output_data = interpreter.get_tensor(output_details[0]['index'])
+
+            # save results
             preds.append(output_data[0])
             filenames.append(file)
+
+            # print message every 100 images
             count += 1
             if count % 100 == 0:
                 print('First', str(count), 'images done!')
