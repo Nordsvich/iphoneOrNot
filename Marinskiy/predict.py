@@ -1,37 +1,50 @@
 # import libraries
 import argparse
-from keras.models import load_model
-from keras.preprocessing.image import ImageDataGenerator
 import pandas as pd
+import numpy as np
 import os
+import tensorflow as tf
+from keras.preprocessing import image
 
 
+# create function for loading and rescaling images
+def load_image(img_path):
+    img = image.load_img(img_path, target_size=(224, 224))
+    img_tensor = image.img_to_array(img)
+    img_tensor = np.expand_dims(img_tensor, axis=0)
+    img_tensor /= 255.
+    return img_tensor
+
+
+# create function for calculating probabilities
 def predict_proba(model_path, in_folder, out_file):
 
     print('Start image processing...')
 
-    # load model
-    model = load_model(model_path)
+    # Load TFLite model and allocate tensors.
+    interpreter = tf.lite.Interpreter(model_path=model_path)
+    interpreter.allocate_tensors()
 
-    # batch size
-    batch_size = 32
+    # Get input and output tensors.
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
 
-    # define ImageDataGenerator
-    test_datagen = ImageDataGenerator(rescale=1./255)
-    test_generator = test_datagen.flow_from_directory(
-            directory=in_folder,
-            target_size=(224, 224),
-            shuffle=False,
-            class_mode=None,
-            batch_size=batch_size)
+    # Now lets walk through our validation set and get predictions for each photo
+    preds = []
+    filenames = []
+    count = 0
 
-    # get filenames
-    filenames = [filename.split('\\')[-1] for filename in test_generator.filenames]
-
-    # get predictions
-    nb_samples = len(filenames)
-    test_generator.reset()
-    preds = model.predict_generator(test_generator, steps=nb_samples / batch_size, verbose=1)
+    for subdir, dirs, files in os.walk(in_folder):
+        for file in files:
+            input_data = load_image(os.path.join(subdir, file))
+            interpreter.set_tensor(input_details[0]['index'], input_data)
+            interpreter.invoke()
+            output_data = interpreter.get_tensor(output_details[0]['index'])
+            preds.append(output_data[0])
+            filenames.append(file)
+            count += 1
+            if count % 100 == 0:
+                print('First', str(count), 'images done!')
 
     # create dataframe with filenames and iphone probabilities
     out_df = pd.DataFrame()
@@ -48,7 +61,7 @@ if __name__ == '__main__':
 
     # parse arguments
     parser = argparse.ArgumentParser(description='Iphone detector')
-    parser.add_argument('--model', type=str, default='model.hdf5', help='path to model')
+    parser.add_argument('--model', type=str, default='converted_model.tflite', help='path to model')
     parser.add_argument('--input', type=str, default='test', help='path to folder with pictures')
     parser.add_argument('--output', type=str, default='predictions.csv', help='path to file with model output')
     args = parser.parse_args()
