@@ -1,0 +1,6 @@
+Model file was too huge, so I 
+decided to use Git LFS and it did not allow 
+to commit to the public fork of the repository.
+I created my own one and pushed eerything there.
+
+https://github.com/Mxsol/IPhone-Task.git
