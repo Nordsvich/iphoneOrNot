@@ -1,0 +1,2 @@
+Link to test and val parts of the dataset:https://drive.google.com/drive/folders/1G2IMr5U1_B0qztbM_TAeoSe9MGbW6_iv?usp=sharing 
+* train part is quiete huge, so there was no sense to download it.
